@@ -1,0 +1,98 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: product-service
+
+  datasource:
+    url: jdbc:h2:mem:productdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# ==================== RESILIENCE4J CONFIGURATION ====================
+
+resilience4j:
+  # 1. RETRY - Tự động thử lại khi lỗi
+  retry:
+    configs:
+      default:
+        maxAttempts: 3                        # Thử tối đa 3 lần
+        waitDuration: 1s                      # Chờ 1 giây giữa các lần
+        enableExponentialBackoff: true        # Tăng dần thời gian chờ
+        exponentialBackoffMultiplier: 2       # x2 mỗi lần (1s, 2s, 4s)
+        retryExceptions:
+          - java.lang.Exception
+    instances:
+      productService:
+        baseConfig: default
+
+  # 2. CIRCUIT BREAKER - Ngắt mạch khi service lỗi liên tục
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10                 # Tính toán dựa trên 10 request gần nhất
+        minimumNumberOfCalls: 5               # Cần ít nhất 5 requests trước khi tính toán
+        permittedNumberOfCallsInHalfOpenState: 3  # Cho phép 3 request khi half-open
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s          # Chờ 10s trước khi chuyển sang half-open
+        failureRateThreshold: 50              # Mở circuit khi 50% requests lỗi
+        slowCallRateThreshold: 100            # Ngưỡng slow call
+        slowCallDurationThreshold: 2s         # Request > 2s coi là slow
+        recordExceptions:
+          - java.lang.Exception
+    instances:
+      productService:
+        baseConfig: default
+
+  # 3. RATE LIMITER - Giới hạn số lượng request
+  ratelimiter:
+    configs:
+      default:
+        limitForPeriod: 2                    # Cho phép 10 requests
+        limitRefreshPeriod: 10s               # Trong 1 giây
+        timeoutDuration: 0s                   # Không chờ, reject ngay
+    instances:
+      productService:
+        baseConfig: default
+
+  # 4. BULKHEAD - Giới hạn concurrent calls
+  bulkhead:
+    configs:
+      default:
+        maxConcurrentCalls: 2                 # Tối đa 5 requests đồng thời
+        maxWaitDuration: 0              # Chờ tối đa 100ms
+    instances:
+      productService:
+        baseConfig: default
+
+# Actuator - Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers,ratelimiters,retries,bulkheads
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+
+logging:
+  level:
+    com.microservices.product: DEBUG
+    io.github.resilience4j: DEBUG
