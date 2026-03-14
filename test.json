@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "Microservices REST - Resilience4j",
+    "description": "Test Product và Order Service với Resilience4j patterns"
+  },
+  "item": [
+    {
+      "name": "Product Service",
+      "item": [
+        {
+          "name": "GET All Products (Retry)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8081/api/products"
+          }
+        },
+        {
+          "name": "GET Product by ID (Circuit Breaker)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8081/api/products/1"
+          }
+        },
+        {
+          "name": "POST Create Product (Rate Limiter)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"iPhone 15\",\"description\":\"Latest iPhone\",\"price\":999.99,\"stock\":50}"
+            },
+            "url": "http://localhost:8081/api/products"
+          }
+        },
+        {
+          "name": "PUT Update Product (Bulkhead)",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"iPhone 15 Pro\",\"price\":1199.99,\"stock\":30}"
+            },
+            "url": "http://localhost:8081/api/products/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order Service",
+      "item": [
+        {
+          "name": "GET All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8082/api/orders"
+          }
+        },
+        {
+          "name": "POST Create Order (Inter-service)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"productId\":1,\"quantity\":2}"
+            },
+            "url": "http://localhost:8082/api/orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Monitoring",
+      "item": [
+        {
+          "name": "Circuit Breaker Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8081/actuator/circuitbreakers"
+          }
+        },
+        {
+          "name": "Rate Limiter Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8081/actuator/ratelimiters"
+          }
+        }
+      ]
+    }
+  ]
+}
