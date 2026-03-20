@@ -27,9 +27,17 @@ function RoleBadge({ role }: { role: string }) {
 export default function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [tab, setTab]           = useState<Tab>('articles');
+  const [mode, setMode]         = useState<'login' | 'register'>('login'); // Toggle login/register
+  
+  // Login form
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+
+  // Register form
+  const [regForm, setRegForm] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+  const [regError, setRegError] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
 
   const handleLogin = async () => {
     setLoginError(''); setLoginLoading(true);
@@ -37,11 +45,33 @@ export default function App() {
       const data = await api.auth.login(loginForm.username, loginForm.password);
       if (data.error) { setLoginError(data.error); return; }
       setAuthUser(data);
+      setLoginForm({ username: '', password: '' });
     } catch { setLoginError('Lỗi kết nối server'); }
     finally { setLoginLoading(false); }
   };
 
+  const handleRegister = async () => {
+    setRegError(''); setRegLoading(true);
+    
+    // Validation
+    if (!regForm.username.trim()) { setRegError('Username không được rỗng'); setRegLoading(false); return; }
+    if (!regForm.email.includes('@')) { setRegError('Email không hợp lệ'); setRegLoading(false); return; }
+    if (regForm.password.length < 6) { setRegError('Mật khẩu tối thiểu 6 ký tự'); setRegLoading(false); return; }
+    if (regForm.password !== regForm.confirmPassword) { setRegError('Mật khẩu không trùng khớp'); setRegLoading(false); return; }
+
+    try {
+      const data = await api.auth.register(regForm.username, regForm.email, regForm.password, 'WRITER');
+      if (data.error) { setRegError(data.error); setRegLoading(false); return; }
+      setRegError('');
+      setMode('login');
+      setLoginForm({ username: regForm.username, password: regForm.password });
+      setRegForm({ username: '', email: '', password: '', confirmPassword: '' });
+    } catch (e) { setRegError('Lỗi tạo tài khoản'); }
+    finally { setRegLoading(false); }
+  };
+
   const handleLogout = () => { setAuthUser(null); setLoginForm({ username: '', password: '' }); };
+  const toggleMode = () => { setMode(mode === 'login' ? 'register' : 'login'); setLoginError(''); setRegError(''); };
 
   // ── CSS ─────────────────────────────────────────────────────────
   const css = `
@@ -134,15 +164,41 @@ export default function App() {
         <div className="auth-wrap">
           <div className="auth-card">
             <div className="auth-title">📰 Publish Platform</div>
-            <div className="auth-sub">Đăng nhập để tiếp tục</div>
-            {loginError && <div className="auth-error">{loginError}</div>}
-            <form onSubmit={e => { e.preventDefault(); handleLogin(); }}>
-              <label className="form-label">Username</label>
-              <input className="form-input" value={loginForm.username} onChange={e => setLoginForm(f => ({...f, username: e.target.value}))} placeholder="Nhập username..." />
-              <label className="form-label">Mật khẩu</label>
-              <input className="form-input" type="password" value={loginForm.password} onChange={e => setLoginForm(f => ({...f, password: e.target.value}))} placeholder="Nhập mật khẩu..." />
-              <button className="btn-primary" type="submit" disabled={loginLoading}>{loginLoading ? '⏳ Đang đăng nhập...' : 'Đăng nhập'}</button>
-            </form>
+            <div className="auth-sub">{mode === 'login' ? 'Đăng nhập để tiếp tục' : 'Tạo tài khoản mới'}</div>
+            
+            {mode === 'login' ? (
+              <>
+                {loginError && <div className="auth-error">{loginError}</div>}
+                <form onSubmit={e => { e.preventDefault(); handleLogin(); }}>
+                  <label className="form-label">Username</label>
+                  <input className="form-input" value={loginForm.username} onChange={e => setLoginForm(f => ({...f, username: e.target.value}))} placeholder="Nhập username..." />
+                  <label className="form-label">Mật khẩu</label>
+                  <input className="form-input" type="password" value={loginForm.password} onChange={e => setLoginForm(f => ({...f, password: e.target.value}))} placeholder="Nhập mật khẩu..." />
+                  <button className="btn-primary" type="submit" disabled={loginLoading}>{loginLoading ? '⏳ Đang đăng nhập...' : 'Đăng nhập'}</button>
+                </form>
+                <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#64748b' }}>
+                  Chưa có tài khoản? <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>Đăng ký ngay</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {regError && <div className="auth-error">{regError}</div>}
+                <form onSubmit={e => { e.preventDefault(); handleRegister(); }}>
+                  <label className="form-label">Username</label>
+                  <input className="form-input" value={regForm.username} onChange={e => setRegForm(f => ({...f, username: e.target.value}))} placeholder="Chọn username..." />
+                  <label className="form-label">Email</label>
+                  <input className="form-input" type="email" value={regForm.email} onChange={e => setRegForm(f => ({...f, email: e.target.value}))} placeholder="email@example.com" />
+                  <label className="form-label">Mật khẩu</label>
+                  <input className="form-input" type="password" value={regForm.password} onChange={e => setRegForm(f => ({...f, password: e.target.value}))} placeholder="Tối thiểu 6 ký tự" />
+                  <label className="form-label">Xác nhận mật khẩu</label>
+                  <input className="form-input" type="password" value={regForm.confirmPassword} onChange={e => setRegForm(f => ({...f, confirmPassword: e.target.value}))} placeholder="Nhập lại mật khẩu" />
+                  <button className="btn-primary" type="submit" disabled={regLoading}>{regLoading ? '⏳ Đang tạo tài khoản...' : 'Đăng ký'}</button>
+                </form>
+                <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: '#64748b' }}>
+                  Đã có tài khoản? <button onClick={toggleMode} style={{ background: 'none', border: 'none', color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>Đăng nhập</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </>
