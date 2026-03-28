@@ -1,0 +1,12 @@
+com\example\register\entity\User.class
+com\example\register\controller\RegisterController.class
+com\example\register\RegisterServiceApplication.class
+com\example\register\service\RegisterService.class
+com\example\register\config\SecurityConfig.class
+com\example\register\model\RegisterResponse$Builder.class
+com\example\register\model\UserInfo.class
+com\example\register\entity\User$Builder.class
+com\example\register\model\RegisterRequest.class
+com\example\register\repository\UserRepository.class
+com\example\register\model\RegisterResponse.class
+com\example\register\model\UserInfo$Builder.class

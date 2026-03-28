@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        # Route đến Register Service
+        - id: register-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/register/**
+
+        # Route đến Login Service
+        - id: login-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/auth/**
+
+      # Global CORS config
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+            allowedHeaders: "*"
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

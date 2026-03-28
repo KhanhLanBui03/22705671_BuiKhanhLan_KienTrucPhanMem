@@ -1,0 +1,20 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: login-service
+
+# URL của Register Service (Login Service gọi qua RestTemplate)
+register:
+  service:
+    url: http://localhost:8081
+
+# JWT config
+jwt:
+  secret: "MySecretKeyForJWTMustBe256BitsLongAtLeast!!"
+  expiration: 86400000  # 24 giờ (ms)
+
+logging:
+  level:
+    com.example.login: DEBUG
