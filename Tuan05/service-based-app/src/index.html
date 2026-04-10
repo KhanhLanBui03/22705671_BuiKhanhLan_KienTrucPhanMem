@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>Service Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        :root{
+          --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+          --border:#30363d;--text:#e6edf3;--muted:#8b949e;
+          --green:#3fb950;--blue:#58a6ff;--orange:#ffa657;--red:#f85149;--purple:#bc8cff;
+        }
+        body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh}
+        .app{display:flex;height:100vh;overflow:hidden}
+
+        .sidebar{width:215px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+        .sidebar-head{padding:14px 14px 12px;border-bottom:1px solid var(--border)}
+        .sidebar-head h1{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;margin-bottom:12px}
+        .lbl{font-size:10px;color:var(--muted);letter-spacing:.07em;margin-bottom:4px}
+        .base-input{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 8px;width:100%;outline:none;transition:border .15s}
+        .base-input:focus{border-color:var(--blue)}
+        .conn{display:flex;align-items:center;gap:5px;margin-top:5px;font-size:10px;color:var(--muted)}
+        .cdot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
+        .cdot.ok{background:var(--green)}.cdot.err{background:var(--red)}
+
+        .nav{flex:1;overflow-y:auto;padding:6px 0}
+        .nsec{font-size:10px;color:var(--muted);padding:10px 14px 4px;letter-spacing:.08em;text-transform:uppercase}
+        .nbtn{display:flex;align-items:center;gap:7px;padding:8px 14px;cursor:pointer;border:none;background:none;color:var(--muted);width:100%;text-align:left;font-family:'JetBrains Mono',monospace;font-size:12px;transition:all .15s;border-left:2px solid transparent}
+        .nbtn:hover{background:var(--bg3);color:var(--text)}
+        .nbtn.active{background:var(--bg3);color:var(--text)}
+        .nbtn[data-c="o"].active{border-left-color:#f0883e;color:#f0883e}
+        .nbtn[data-c="p"].active{border-left-color:var(--green);color:var(--green)}
+        .nbtn[data-c="s"].active{border-left-color:var(--blue);color:var(--blue)}
+        .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .do{background:#f0883e}.dp{background:var(--green)}.ds{background:var(--blue)}
+        .mb{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:auto}
+        .Gb{color:var(--green);background:#0d2f1a}.Pb{color:var(--blue);background:#0c2040}.Ub{color:#ffa657;background:#2a1f08}
+
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+        .top{padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+        .ep-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .mtag{font-size:11px;font-weight:700;padding:4px 10px;border-radius:5px;flex-shrink:0;min-width:52px;text-align:center}
+        .GET{background:#0d2f1a;color:var(--green);border:1px solid #1a5e2e}
+        .POST{background:#0c2040;color:var(--blue);border:1px solid #1a4472}
+        .PUT{background:#2a1f08;color:#ffa657;border:1px solid #5e3d10}
+        .urlbox{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+        .urlbox .pv{color:#ffa657}
+        .sbtn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0;transition:opacity .15s}
+        .sbtn:hover{opacity:.85}.sbtn:disabled{opacity:.4;cursor:not-allowed}
+        .ep-desc{font-size:11px;color:var(--muted)}
+
+        .parea{padding:0 18px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-y:auto;max-height:200px}
+        .ptitle{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 6px}
+        .prow{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+        .plbl{font-size:11px;color:var(--muted);min-width:130px;flex-shrink:0}
+        .pinput{background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;flex:1;outline:none;transition:border .15s}
+        .pinput:focus{border-color:var(--blue)}
+        select.pinput option{background:var(--bg3)}
+
+        .rarea{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+        .rhead{padding:10px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0}
+        .rtitle{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+        .sbadge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px}
+        .s2{background:#0d2f1a;color:var(--green)}.s4{background:#2a1f08;color:#ffa657}.s5{background:#2a0c0c;color:var(--red)}
+        .rtime{font-size:11px;color:var(--muted);margin-left:auto}
+        .vtog{display:flex;gap:4px}
+        .vtb{font-size:10px;padding:3px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-family:'JetBrains Mono',monospace}
+        .vtb.active{background:var(--bg4);color:var(--text);border-color:var(--blue)}
+        .rbody{flex:1;overflow:auto;padding:14px 18px}
+        .empty{color:var(--muted);font-size:12px}
+        .jpre{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+        .jk{color:var(--blue)}.js{color:var(--green)}.jn{color:#ffa657}.jb{color:var(--purple)}.jnull{color:var(--muted)}
+        .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .6s linear infinite;margin-right:6px;vertical-align:middle}
+        @keyframes sp{to{transform:rotate(360deg)}}
+        .errmsg{color:var(--red);font-size:12px;padding:12px;background:#2a0c0c;border-radius:6px;border:1px solid #5e1a1a;line-height:1.6}
+        .dtbl{width:100%;border-collapse:collapse;font-size:12px}
+        .dtbl th{text-align:left;padding:7px 10px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+        .dtbl td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;word-break:break-word}
+        .dtbl tr:last-child td{border-bottom:none}
+        .dtbl tr:hover td{background:var(--bg3)}
+        .sp{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid;white-space:nowrap}
+        .PENDING,.PREPARING{color:#e3a04b;border-color:#5e3d10;background:#2a1f08}
+        .CONFIRMED,.REFUNDED,.IN_TRANSIT{color:var(--blue);border-color:#1a4472;background:#0c2040}
+        .PAID,.COMPLETED,.DELIVERED{color:var(--green);border-color:#1a5e2e;background:#0d2f1a}
+        .SHIPPED{color:var(--purple);border-color:#4a2e8a;background:#1c1030}
+        .CANCELLED,.FAILED{color:var(--red);border-color:#5e1a1a;background:#2a0c0c}
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <div class="sidebar">
+        <div class="sidebar-head">
+            <h1>🔌 Service Explorer</h1>
+            <div class="lbl">BASE URL</div>
+            <input class="base-input" id="baseUrl" value="http://localhost:8080" placeholder="http://localhost:8080"/>
+            <div class="conn"><span class="cdot" id="cdot"></span><span id="ctext">Chưa kiểm tra</span></div>
+        </div>
+        <div class="nav">
+            <div class="nsec">📦 Order Service</div>
+            <button class="nbtn active" data-c="o" onclick="pick('order','getAllOrders',this)"><span class="dot do"></span>getAllOrders<span class="mb Gb">GET</span></button>
+            <button class="nbtn" data-c="o" onclick="pick('order','getOrderById',this)"><span class="dot do"></span>getOrderById<span class="mb Gb">GET</span></button>
+            <button class="nbtn" data-c="o" onclick="pick('order','createOrder',this)"><span class="dot do"></span>createOrder<span class="mb Pb">POST</span></button>
+            <button class="nbtn" data-c="o" onclick="pick('order','confirmOrder',this)"><span class="dot do"></span>confirmOrder<span class="mb Ub">PUT</span></button>
+            <div class="nsec">💳 Payment Service</div>
+            <button class="nbtn" data-c="p" onclick="pick('payment','getPayment',this)"><span class="dot dp"></span>getPayment<span class="mb Gb">GET</span></button>
+            <button class="nbtn" data-c="p" onclick="pick('payment','completePayment',this)"><span class="dot dp"></span>completePayment<span class="mb Ub">PUT</span></button>
+            <div class="nsec">🚚 Shipping Service</div>
+            <button class="nbtn" data-c="s" onclick="pick('shipping','getShipmentByOrder',this)"><span class="dot ds"></span>getShipmentByOrder<span class="mb Gb">GET</span></button>
+            <button class="nbtn" data-c="s" onclick="pick('shipping','trackShipment',this)"><span class="dot ds"></span>trackShipment<span class="mb Gb">GET</span></button>
+            <button class="nbtn" data-c="s" onclick="pick('shipping','updateStatus',this)"><span class="dot ds"></span>updateStatus<span class="mb Ub">PUT</span></button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="top">
+            <div class="ep-row">
+                <span class="mtag GET" id="mtag">GET</span>
+                <div class="urlbox" id="urlbox">/api/orders</div>
+                <button class="sbtn" id="sbtn" onclick="doSend()">▶ Send</button>
+            </div>
+            <div class="ep-desc" id="edesc">Lấy tất cả đơn hàng trong hệ thống</div>
+        </div>
+
+        <div class="parea" id="parea"></div>
+
+        <div class="rarea">
+            <div class="rhead">
+                <span class="rtitle">Response</span>
+                <span class="sbadge" id="sbadge" style="display:none"></span>
+                <span class="rtime" id="rtime"></span>
+                <div class="vtog" id="vtog" style="display:none">
+                    <button class="vtb active" id="vtTable" onclick="setView('table')">Table</button>
+                    <button class="vtb" id="vtJson" onclick="setView('json')">JSON</button>
+                </div>
+            </div>
+            <div class="rbody" id="rbody"><div class="empty">← Chọn endpoint rồi nhấn ▶ Send</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const EPS = {
+      order: {
+        getAllOrders:  {method:'GET', path:'/api/orders', desc:'Lấy tất cả đơn hàng', params:[]},
+        getOrderById: {method:'GET', path:'/api/orders/{id}', desc:'Lấy đơn hàng theo ID',
+          params:[{n:'id',l:'Order ID',t:'number',ph:'1'}]},
+        createOrder:  {method:'POST', path:'/api/orders', desc:'Tạo đơn hàng mới (tự động khởi tạo payment)', isBody:true,
+          params:[{n:'customerName',l:'customerName',t:'text',ph:'Nguyen Van A'},{n:'customerEmail',l:'customerEmail',t:'email',ph:'a@gmail.com'},{n:'totalAmount',l:'totalAmount',t:'number',ph:'150000'}]},
+        confirmOrder: {method:'PUT', path:'/api/orders/{id}/confirm', desc:'Xác nhận đơn hàng → CONFIRMED',
+          params:[{n:'id',l:'Order ID',t:'number',ph:'1'}]},
+      },
+      payment: {
+        getPayment:      {method:'GET', path:'/api/payments/order/{orderId}', desc:'Lấy payment theo orderId',
+          params:[{n:'orderId',l:'Order ID',t:'number',ph:'1'}]},
+        completePayment: {method:'PUT', path:'/api/payments/{paymentId}/complete', desc:'Hoàn thành thanh toán → tự động tạo shipment',
+          params:[{n:'paymentId',l:'Payment ID',t:'number',ph:'1'},{n:'method',l:'method (query)',t:'select',opts:['CASH','BANK_TRANSFER','CREDIT_CARD','MOMO','ZALOPAY']}]},
+      },
+      shipping: {
+        getShipmentByOrder: {method:'GET', path:'/api/shipments/order/{orderId}', desc:'Lấy shipment theo orderId',
+          params:[{n:'orderId',l:'Order ID',t:'number',ph:'1'}]},
+        trackShipment:      {method:'GET', path:'/api/shipments/track/{trackingCode}', desc:'Tra cứu theo mã TRK-XXXXXXXX',
+          params:[{n:'trackingCode',l:'Tracking Code',t:'text',ph:'TRK-ABC12345'}]},
+        updateStatus:       {method:'PUT', path:'/api/shipments/{shipmentId}/status', desc:'Cập nhật trạng thái vận chuyển',
+          params:[{n:'shipmentId',l:'Shipment ID',t:'number',ph:'1'},{n:'status',l:'status (query)',t:'select',opts:['PREPARING','SHIPPED','IN_TRANSIT','DELIVERED','FAILED']}]},
+      }
+    };
+
+    let curEp = EPS.order.getAllOrders;
+    let lastData = null;
+    let curView = 'table';
+
+    function pick(svc, key, btn) {
+      curEp = EPS[svc][key];
+      lastData = null; curView = 'table';
+      document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const m = curEp.method;
+      const mt = document.getElementById('mtag');
+      mt.textContent = m; mt.className = 'mtag ' + m;
+      document.getElementById('urlbox').innerHTML = fmtPath(curEp.path);
+      document.getElementById('edesc').textContent = curEp.desc;
+      renderParams();
+      clearRes();
+    }
+
+    function fmtPath(p) { return p.replace(/\{([^}]+)\}/g,'<span class="pv">{$1}</span>'); }
+
+    function renderParams() {
+      const area = document.getElementById('parea');
+      const ps = curEp.params || [];
+      if (!ps.length) { area.innerHTML=''; return; }
+      const pathPs = ps.filter(p => curEp.path.includes('{'+p.n+'}'));
+      const otherPs = ps.filter(p => !curEp.path.includes('{'+p.n+'}'));
+      let h = '';
+      if (pathPs.length) { h += '<div class="ptitle">Path Parameters</div>'; pathPs.forEach(p=>{h+=prow(p);}); }
+      if (otherPs.length) {
+        h += `<div class="ptitle">${curEp.isBody?'Request Body':'Query Parameters'}</div>`;
+        otherPs.forEach(p=>{h+=prow(p);});
+      }
+      area.innerHTML = h;
+    }
+
+    function prow(p) {
+      if (p.t==='select') {
+        const opts = p.opts.map(o=>`<option value="${o}">${o}</option>`).join('');
+        return `<div class="prow"><span class="plbl">${p.l}</span><select class="pinput" id="p_${p.n}">${opts}</select></div>`;
+      }
+      return `<div class="prow"><span class="plbl">${p.l}</span><input class="pinput" id="p_${p.n}" type="${p.t}" placeholder="${p.ph||''}"/></div>`;
+    }
+
+    function gv(n){ const e=document.getElementById('p_'+n); return e?e.value.trim():''; }
+
+    async function doSend() {
+      const base = document.getElementById('baseUrl').value.replace(/\/$/,'');
+      const btn = document.getElementById('sbtn');
+      btn.disabled = true;
+      let path = curEp.path, qs = '', body = null;
+      const ps = curEp.params || [];
+      const pathPs = ps.filter(p=>curEp.path.includes('{'+p.n+'}'));
+      const otherPs = ps.filter(p=>!curEp.path.includes('{'+p.n+'}'));
+      pathPs.forEach(p=>{ path=path.replace('{'+p.n+'}', encodeURIComponent(gv(p.n))); });
+      if (curEp.isBody) {
+        const obj={};
+        otherPs.forEach(p=>{ const v=gv(p.n); obj[p.n]=p.t==='number'?Number(v):v; });
+        body = JSON.stringify(obj);
+      } else {
+        const q = otherPs.map(p=>`${p.n}=${encodeURIComponent(gv(p.n))}`).filter(s=>!s.endsWith('=')).join('&');
+        if (q) qs='?'+q;
+      }
+      const url = base+path+qs;
+      document.getElementById('urlbox').textContent = url;
+      showLoading();
+      const t0 = Date.now();
+      try {
+        const r = await fetch(url, {method:curEp.method, headers:{'Content-Type':'application/json','Accept':'application/json'}, ...(body?{body}:{})});
+        const ms = Date.now()-t0;
+        let data; try { data=await r.json(); } catch { data=null; }
+        lastData = data;
+        showRes(r.status, data, ms);
+        setConn(true);
+      } catch(e) { showErr(e.message); setConn(false); }
+      btn.disabled = false;
+    }
+
+    function showLoading() {
+      document.getElementById('sbadge').style.display='none';
+      document.getElementById('rtime').textContent='';
+      document.getElementById('vtog').style.display='none';
+      document.getElementById('rbody').innerHTML='<span class="spin"></span><span style="color:var(--muted);font-size:12px">Đang gọi API...</span>';
+    }
+
+    function clearRes() {
+      document.getElementById('sbadge').style.display='none';
+      document.getElementById('rtime').textContent='';
+      document.getElementById('vtog').style.display='none';
+      document.getElementById('rbody').innerHTML='<div class="empty">Nhấn ▶ Send để gọi API</div>';
+    }
+
+    function showRes(status, data, ms) {
+      const b = document.getElementById('sbadge');
+      b.textContent = status; b.style.display='';
+      b.className = 'sbadge ' + (status<300?'s2':status<500?'s4':'s5');
+      document.getElementById('rtime').textContent = ms+' ms';
+      const ok = status<300 && data !== null;
+      if (ok && typeof data==='object') {
+        document.getElementById('vtog').style.display='flex';
+        renderView(curView, data);
+      } else {
+        document.getElementById('vtog').style.display='none';
+        document.getElementById('rbody').innerHTML=`<pre class="jpre">${highlight(data)}</pre>`;
+      }
+    }
+
+    function showErr(msg) {
+      document.getElementById('sbadge').style.display='none';
+      document.getElementById('rtime').textContent='';
+      document.getElementById('vtog').style.display='none';
+      document.getElementById('rbody').innerHTML=`<div class="errmsg">⚠ Không thể kết nối tới backend<br/><br/>${msg}<br/><br/>Kiểm tra lại Base URL và đảm bảo backend đang chạy trên cổng 8080.</div>`;
+    }
+
+    function setView(v) {
+      curView=v;
+      document.getElementById('vtTable').className='vtb'+(v==='table'?' active':'');
+      document.getElementById('vtJson').className='vtb'+(v==='json'?' active':'');
+      if (lastData!==null) renderView(v,lastData);
+    }
+
+    const STATUS_FIELDS = new Set(['status']);
+    function renderView(v,data) {
+      const body = document.getElementById('rbody');
+      if (v==='json') { body.innerHTML=`<pre class="jpre">${highlight(data)}</pre>`; return; }
+      const arr = Array.isArray(data)?data:[data];
+      if (!arr.length||typeof arr[0]!=='object'||arr[0]===null) { body.innerHTML=`<pre class="jpre">${highlight(data)}</pre>`; return; }
+      const keys = Object.keys(arr[0]);
+      let h='<table class="dtbl"><thead><tr>'+keys.map(k=>`<th>${k}</th>`).join('')+'</tr></thead><tbody>';
+      arr.forEach(row=>{
+        h+='<tr>'+keys.map(k=>{
+          const v=row[k];
+          if (STATUS_FIELDS.has(k)&&v) return `<td><span class="sp ${v}">${v}</span></td>`;
+          if (v===null||v===undefined) return `<td style="color:var(--muted)">—</td>`;
+          return `<td>${String(v)}</td>`;
+        }).join('')+'</tr>';
+      });
+      h+='</tbody></table>';
+      body.innerHTML=h;
+    }
+
+    function highlight(json) {
+      if (json===null) return '<span class="jnull">null</span>';
+      return JSON.stringify(json,null,2).replace(/("(\\u[\dA-Fa-f]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,m=>{
+        if (/^"/.test(m)) return /:$/.test(m)?`<span class="jk">${m}</span>`:`<span class="js">${m}</span>`;
+        if (/true|false/.test(m)) return `<span class="jb">${m}</span>`;
+        if (/null/.test(m)) return `<span class="jnull">${m}</span>`;
+        return `<span class="jn">${m}</span>`;
+      });
+    }
+
+    function setConn(ok) {
+      document.getElementById('cdot').className='cdot'+(ok?' ok':' err');
+      document.getElementById('ctext').textContent=ok?'Đã kết nối':'Không kết nối';
+    }
+
+    async function pingBackend() {
+      const base = document.getElementById('baseUrl').value.replace(/\/$/,'');
+      try {
+        await fetch(base+'/api/orders',{signal:AbortSignal.timeout(3000)});
+        setConn(true);
+      } catch { setConn(false); }
+    }
+
+    document.getElementById('baseUrl').addEventListener('change', pingBackend);
+    window.addEventListener('load', pingBackend);
+</script>
+</body>
+</html>
