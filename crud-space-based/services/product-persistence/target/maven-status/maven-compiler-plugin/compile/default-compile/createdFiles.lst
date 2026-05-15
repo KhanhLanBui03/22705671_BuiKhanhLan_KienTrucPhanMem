@@ -1,0 +1,4 @@
+com\example\productpersistence\ProductPersistenceApplication.class
+com\example\productpersistence\KafkaConsumerService.class
+com\example\productpersistence\ProductRepository.class
+com\example\productpersistence\Product.class

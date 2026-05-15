@@ -1,0 +1,14 @@
+{
+  "name": "inventory-pu",
+  "version": "1.0.0",
+  "description": "Inventory Processing Unit",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.18.2",
+    "redis": "^4.6.7",
+    "cors": "^2.8.5"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

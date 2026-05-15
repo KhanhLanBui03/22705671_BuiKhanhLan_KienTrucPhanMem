@@ -1,0 +1,4 @@
+com\example\productpu\Product.class
+com\example\productpu\ProductController.class
+com\example\productpu\ProductPuApplication.class
+com\example\productpu\RedisConfig.class

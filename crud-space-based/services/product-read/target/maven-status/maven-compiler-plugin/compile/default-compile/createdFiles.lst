@@ -1,0 +1,4 @@
+com\example\productread\RedisConfig.class
+com\example\productread\ProductReadController.class
+com\example\productread\Product.class
+com\example\productread\ProductReadApplication.class
