@@ -1,0 +1,8 @@
+com\movie\bookingservice\BookingServiceApplication.class
+com\movie\bookingservice\entity\Booking.class
+com\movie\bookingservice\producer\BookingProducer.class
+com\movie\bookingservice\service\BookingService.class
+com\movie\bookingservice\dto\BookingRequest.class
+com\movie\bookingservice\controller\BookingController.class
+com\movie\bookingservice\repository\BookingRepository.class
+com\movie\bookingservice\consumer\BookingConsumer.class

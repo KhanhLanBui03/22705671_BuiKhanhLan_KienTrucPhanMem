@@ -1,0 +1,4 @@
+com\movie\paymentservice\producer\PaymentProducer.class
+com\movie\paymentservice\PaymentServiceApplication.class
+com\movie\paymentservice\consumer\NotificationConsumer.class
+com\movie\paymentservice\consumer\PaymentConsumer.class
